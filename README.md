@@ -117,7 +117,7 @@ cd backend
 python -m pytest -q
 ```
 
-42 tests: motor de scoring puro, flujo end-to-end de la API, features corporativas
+43 tests: motor de scoring puro, flujo end-to-end de la API, features corporativas
 (roles, multi-tenancy, auditoría+reversión, comentarios+mención→notificación, API keys),
 los hallazgos de la revisión de seguridad, y el ciclo de reset de la demo pública —
 cada comportamiento tiene su test para que no se repita un regresión.
@@ -270,7 +270,7 @@ producto en producción, y prefiero decirlo explícito a dejar que parezca más 
 | Logging estructurado | **Real.** JSON por línea, listo para un agregador real. |
 | Health check | **Real.** `GET /health` prueba conectividad a la base (`SELECT 1`), no solo "el proceso responde". |
 | Tests de carga | **Script real** con Locust (`backend/loadtest/locustfile.py`) — hay que instalarlo y lanzarlo a mano. |
-| CI/CD | **Real** (`.github/workflows/ci.yml`): corre los 42 tests + build del frontend en cada push/PR. |
+| CI/CD | **Real** (`.github/workflows/ci.yml`): corre los 43 tests + build del frontend en cada push/PR. |
 
 ### UX a escala
 
