@@ -1,0 +1,654 @@
+:root {
+  color-scheme: light;
+
+  /* Fondo y superficies */
+  --bg: #f3f1fa;
+  --surface: #ffffff;
+  --surface-tint: #e9e4fe;
+  --surface-dark: #1e1640;
+  --surface-dark-2: #33286a;
+  --track: #eeebf8;
+
+  /* Violeta (marca) — de oscuro a claro */
+  --violet-900: #1e1640;
+  --violet-800: #3a24b8;
+  --violet-700: #4a30dc;
+  --violet-600: #5b3df5;
+  --violet-400: #7f66f8;
+  --violet-300: #9a86fa;
+  --violet-200: #b6a8fb;
+  --violet-100: #eeeafe;
+
+  /* Acento único */
+  --accent: #ff9f6b;
+  --alert: #ff7a59;
+
+  /* Texto */
+  --text: #1e1640;
+  --text-muted: #5e5885;
+  --text-on-dark: #ffffff;
+  --text-on-dark-muted: #cfc8f2;
+
+  /* Semánticos — SOLO para variaciones (subió / bajó), nunca decorativos */
+  --up-fg: #0b6b45;
+  --up-bg: #dcf5e8;
+  --down-fg: #7a1a0b;
+  --down-bg: #ffd9cf;
+
+  /* Forma */
+  --radius-card: 22px;
+  --radius-control: 14px;
+  --radius-small: 10px;
+  --gap: 18px;
+
+  font-family: "Manrope", system-ui, -apple-system, sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+
+.font-display {
+  font-family: "Bricolage Grotesque", "Manrope", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  display: flex;
+  min-height: 100vh;
+}
+
+a {
+  color: var(--violet-600);
+  text-decoration: none;
+}
+a:hover {
+  color: var(--violet-800);
+}
+
+button {
+  font-family: inherit;
+}
+
+h1, h2, h3 {
+  font-family: "Bricolage Grotesque", "Manrope", sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+code {
+  background: var(--track);
+  border-radius: 6px;
+  padding: 1px 6px;
+  font-size: 0.85em;
+}
+
+/* ---------- Layout: rail + contenido ---------- */
+
+.app-shell {
+  display: flex;
+  width: 100%;
+  min-height: 100vh;
+}
+
+.rail {
+  width: 76px;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  padding: 22px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 26px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+
+.rail-mark {
+  width: 40px;
+  height: 40px;
+  border-radius: 13px;
+  background: var(--violet-900);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.rail-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+
+.rail-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-control);
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.rail-btn:hover {
+  background: var(--surface-tint);
+  color: var(--violet-800);
+}
+
+.rail-btn.active {
+  background: var(--violet-900);
+  color: white;
+}
+
+.rail-spacer {
+  flex-grow: 1;
+}
+
+.main-area {
+  flex: 1;
+  min-width: 0;
+  padding: 26px 32px 48px 20px;
+}
+
+/* Cada página renderiza un único <div> raíz dentro de .main-area; el gap
+   tiene que ir aquí (entre LOS HIJOS de ese div) para separar header,
+   avisos y secciones — ponerlo en .main-area no hacía nada porque solo
+   tiene un hijo directo. */
+.main-area > div {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+/* ---------- Header ---------- */
+
+.ph {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.ph-titles {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex-grow: 1;
+  min-width: 220px;
+}
+
+.ph-eyebrow {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.02em;
+}
+
+.ph-title {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.ph-pills {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  background: var(--surface);
+  border-radius: var(--radius-control);
+}
+
+.ph-pill {
+  height: 38px;
+  padding: 0 14px;
+  border-radius: 12px;
+  border: none;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  background: transparent;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.ph-pill.active {
+  background: var(--violet-900);
+  color: white;
+}
+
+.ph-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 42px;
+  box-sizing: border-box;
+  padding: 0 14px;
+  width: 210px;
+  background: var(--surface);
+  border-radius: var(--radius-control);
+  color: var(--text-muted);
+  border: none;
+}
+
+.ph-search input {
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--text);
+  flex-grow: 1;
+  min-width: 0;
+}
+
+.ph-kbd {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  padding: 3px 6px;
+  border-radius: 6px;
+  background: var(--bg);
+}
+
+.ph-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: var(--radius-control);
+  background: var(--surface-tint);
+  color: var(--violet-800);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+/* ---------- Bento grid & cards ---------- */
+
+.bento {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: var(--gap);
+}
+
+.card {
+  background: var(--surface);
+  border-radius: var(--radius-card);
+  padding: 20px 22px;
+  box-shadow: 0 1px 2px rgba(30, 22, 64, 0.04);
+}
+
+.card > h2:first-child,
+.card > h3:first-child,
+.card > .card-head:first-child {
+  margin-bottom: 14px;
+}
+
+.card.dark {
+  background: var(--surface-dark);
+  color: white;
+  position: relative;
+  overflow: hidden;
+}
+
+.card.violet {
+  background: var(--violet-600);
+  color: white;
+}
+
+.card.tint {
+  background: var(--surface-tint);
+}
+
+.card-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.card-title {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.hero-number {
+  font-family: "Bricolage Grotesque", "Manrope", sans-serif;
+  font-weight: 800;
+  font-size: 54px;
+  letter-spacing: -0.035em;
+  line-height: 0.95;
+}
+
+.tile-number {
+  font-family: "Bricolage Grotesque", "Manrope", sans-serif;
+  font-weight: 800;
+  font-size: 34px;
+  letter-spacing: -0.03em;
+  line-height: 0.95;
+}
+
+/* ---------- Chips / badges ---------- */
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 5px 10px;
+  border-radius: 999px;
+}
+
+.chip.up { color: var(--up-fg); background: var(--up-bg); }
+.chip.down { color: var(--down-fg); background: var(--down-bg); }
+.chip.on-dark { background: var(--surface-dark-2); color: var(--text-on-dark-muted); }
+.chip.on-violet-dark { background: var(--violet-900); color: white; }
+
+/* Estado on/off (ej. API key activa/revocada) -- no es la escala de score,
+   así que sí puede usar verde/rojo como semántica binaria simple. */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px 3px 8px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.78rem;
+}
+.badge .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.badge.good { background: var(--up-bg); color: var(--up-fg); }
+.badge.critical { background: var(--down-bg); color: var(--down-fg); }
+.badge.neutral { background: var(--track); color: var(--text-muted); }
+
+.score-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.86rem;
+}
+
+/* ---------- Progreso ---------- */
+
+.bar-track {
+  height: 10px;
+  border-radius: 999px;
+  background: var(--track);
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--violet-600);
+}
+
+.segmented-bar {
+  display: flex;
+  height: 16px;
+  border-radius: 999px;
+  overflow: hidden;
+  gap: 3px;
+}
+
+/* ---------- Botones / formularios ---------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 42px;
+  padding: 0 16px;
+  border-radius: var(--radius-control);
+  border: none;
+  background: var(--violet-600);
+  color: white;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn:hover {
+  background: var(--violet-700);
+}
+
+.btn.secondary {
+  background: var(--surface);
+  color: var(--text);
+}
+
+.btn.secondary:hover {
+  background: var(--surface-tint);
+}
+
+.btn.dark {
+  background: var(--violet-900);
+  color: white;
+}
+
+.btn.danger {
+  background: var(--surface);
+  color: var(--down-fg);
+}
+
+.btn.danger:hover {
+  background: var(--down-bg);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn.sm {
+  height: 36px;
+  padding: 0 12px;
+  font-size: 13px;
+  border-radius: var(--radius-small);
+}
+
+.icon-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: var(--radius-control);
+  border: none;
+  background: var(--surface);
+  color: var(--text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.icon-btn:hover {
+  background: var(--surface-tint);
+}
+
+input, textarea, select {
+  border: 1px solid #e3ddfa;
+  border-radius: var(--radius-small);
+  padding: 9px 12px;
+  font-size: 0.89rem;
+  font-family: inherit;
+  background: var(--surface);
+  color: var(--text);
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: 2px solid var(--violet-100);
+  border-color: var(--violet-600);
+}
+
+textarea {
+  width: 100%;
+  resize: vertical;
+  font-family: inherit;
+}
+
+label {
+  font-size: 0.79rem;
+  color: var(--text-muted);
+  font-weight: 700;
+  display: block;
+  margin-bottom: 5px;
+}
+
+.field {
+  margin-bottom: 14px;
+}
+
+.row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* ---------- Tablas ---------- */
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+th, td {
+  text-align: left;
+  padding: 12px 14px;
+}
+
+th {
+  color: var(--text-muted);
+  font-weight: 700;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+tbody tr {
+  border-radius: var(--radius-small);
+}
+
+tbody tr.clickable {
+  cursor: pointer;
+}
+
+tbody tr.clickable:hover td {
+  background: var(--surface-tint);
+}
+
+tbody tr td:first-child { border-top-left-radius: var(--radius-small); border-bottom-left-radius: var(--radius-small); }
+tbody tr td:last-child { border-top-right-radius: var(--radius-small); border-bottom-right-radius: var(--radius-small); }
+
+/* ---------- Avatares ---------- */
+
+.avatar {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: var(--radius-small);
+  background: var(--violet-100);
+  color: var(--violet-800);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.avatar.leader {
+  background: var(--violet-600);
+  color: white;
+}
+
+.muted {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.error-banner {
+  background: var(--down-bg);
+  color: var(--down-fg);
+  padding: 10px 14px;
+  border-radius: var(--radius-small);
+  margin-bottom: 4px;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--gap);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 48px 20px;
+  color: var(--text-muted);
+}
+
+@media (max-width: 1100px) {
+  .bento > * {
+    grid-column: span 12 !important;
+  }
+}
+
+@media (max-width: 900px) {
+  .app-shell {
+    flex-direction: column;
+  }
+  .rail {
+    width: 100%;
+    height: auto;
+    position: relative;
+    flex-direction: row;
+    padding: 14px 16px;
+  }
+  .rail-nav {
+    flex-direction: row;
+  }
+  .rail-spacer {
+    display: none;
+  }
+  .main-area {
+    padding: 20px;
+  }
+  .grid-2 {
+    grid-template-columns: 1fr;
+  }
+  .hero-number {
+    font-size: 56px;
+  }
+}

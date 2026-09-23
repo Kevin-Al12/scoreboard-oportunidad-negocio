@@ -1,0 +1,101 @@
+# Blueprint de Render (https://render.com/docs/blueprint-spec) para desplegar
+# el proyecto completo: Postgres + API (FastAPI) + frontend estático (React)
+# + un cron job nocturno que resetea la instancia de demo pública.
+#
+# Cómo usarlo:
+#   1. Conectar el repo de GitHub en https://dashboard.render.com/blueprints
+#      -> "New Blueprint Instance" y elegir este repo.
+#   2. Render lee este archivo y crea los 4 recursos de abajo automáticamente.
+#   3. SECRET_KEY se genera solo (generateValue) -- nunca vive en este
+#      archivo ni en el repo. DATABASE_URL se conecta solo desde el recurso
+#      `scoreboard-db` de abajo.
+#   4. Las URLs https://scoreboard-frontend.onrender.com y
+#      https://scoreboard-backend.onrender.com son predecibles porque son
+#      justo los `name:` de los servicios de abajo -- si les cambias el
+#      nombre (o si esos nombres ya están tomados en Render y te asigna
+#      otros), actualizá CORS_ORIGINS y VITE_API_URL para que coincidan.
+#
+# NOTA: no se pudo probar un despliegue real contra Render desde este
+# entorno de desarrollo -- verificá los nombres de campo exactos contra el
+# Blueprint spec vigente de Render al momento de usarlo (la sintaxis general
+# de `services`/`databases`/`envVars` lleva años estable, pero por si acaso).
+
+databases:
+  - name: scoreboard-db
+    databaseName: scoreboard
+    user: scoreboard
+    plan: free
+    postgresMajorVersion: "16"
+
+services:
+  # --- Backend: FastAPI ---
+  - type: web
+    name: scoreboard-backend
+    env: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    # alembic upgrade head corre ANTES de levantar uvicorn en cada deploy --
+    # nunca create_all. Si la migración falla, el deploy falla (no queda un
+    # servidor corriendo contra un esquema a medio migrar).
+    startCommand: alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: scoreboard-db
+          property: connectionString
+      # Generado por Render, único por servicio, nunca en el repo.
+      - key: SECRET_KEY
+        generateValue: true
+      # Render pone la app detrás de su proxy: request.client.host sería la
+      # IP interna del proxy para TODO el tráfico. Ver app/core/rate_limit.py.
+      - key: TRUST_PROXY_HEADERS
+        value: "true"
+      # Ver la nota de arriba sobre por qué esta URL es predecible.
+      - key: CORS_ORIGINS
+        value: https://scoreboard-frontend.onrender.com
+      - key: API_RATE_LIMIT_POR_MINUTO
+        value: "60"
+      # Notificaciones por email/Slack quedan sin configurar por defecto en
+      # este blueprint (son opcionales, ver README) -- agregalas manualmente
+      # en el dashboard de Render si querés activarlas: SMTP_HOST,
+      # SMTP_PORT, SMTP_USER, SMTP_PASSWORD, SMTP_FROM.
+
+  # --- Frontend: React (Vite), servido como sitio estático ---
+  - type: web
+    name: scoreboard-frontend
+    env: static
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://scoreboard-backend.onrender.com
+    routes:
+      # SPA: cualquier ruta que no sea un archivo real cae en index.html
+      # (React Router resuelve /sectores, /criterios, etc. en el cliente).
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
+  # --- Cron nocturno: resetea la demo pública a su estado sembrado ---
+  - type: cron
+    name: scoreboard-demo-reset
+    env: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    # 06:00 UTC = 2:00 AM en RD (UTC-4, sin horario de verano) -- de
+    # madrugada, cuando es más improbable que alguien esté usando la demo.
+    schedule: "0 6 * * *"
+    startCommand: python reset_demo.py
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: scoreboard-db
+          property: connectionString
+      # reset_demo.py exige esto para no poder correr por accidente contra
+      # una base que no sea la de esta demo pública (ver el propio script).
+      - key: ES_INSTANCIA_DEMO
+        value: "si"
