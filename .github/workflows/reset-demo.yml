@@ -1,0 +1,60 @@
+name: Reset demo pública
+
+# Borra y vuelve a sembrar la base de la demo pública cada noche, para que
+# lo que los visitantes creen durante el día desaparezca.
+#
+# Corre aquí (gratis) en vez de como cron job de Render, que no tiene plan
+# gratis. Necesita estos secrets del repo (Settings > Secrets and variables >
+# Actions):
+#   DEMO_DATABASE_URL     -> la "External Database URL" de scoreboard-db en Render
+#   DEMO_ADMIN_PASSWORD   -> contraseña privada del admin de la demo
+#   DEMO_EDITOR_PASSWORD  -> contraseña privada del editor de la demo
+# Sin DEMO_DATABASE_URL el job no hace nada (así no falla antes del despliegue
+# ni en forks del repo).
+
+on:
+  schedule:
+    - cron: "0 6 * * *"  # 06:00 UTC = 2:00 AM en RD (UTC-4)
+  workflow_dispatch: {}   # botón "Run workflow" para correrlo a mano
+
+concurrency:
+  group: reset-demo
+  cancel-in-progress: false
+
+jobs:
+  reset:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      DATABASE_URL: ${{ secrets.DEMO_DATABASE_URL }}
+      DEMO_ADMIN_PASSWORD: ${{ secrets.DEMO_ADMIN_PASSWORD }}
+      DEMO_EDITOR_PASSWORD: ${{ secrets.DEMO_EDITOR_PASSWORD }}
+      ES_INSTANCIA_DEMO: "si"
+    steps:
+      - name: Verificar configuración
+        id: config
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "DEMO_DATABASE_URL no está configurado; no hay demo que resetear."
+            echo "listo=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "listo=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/checkout@v4
+        if: steps.config.outputs.listo == 'true'
+      - uses: actions/setup-python@v5
+        if: steps.config.outputs.listo == 'true'
+        with:
+          python-version: "3.12"
+          cache: "pip"
+          cache-dependency-path: backend/requirements.txt
+      - if: steps.config.outputs.listo == 'true'
+        run: pip install -r requirements.txt
+      - name: Aplicar migraciones pendientes
+        if: steps.config.outputs.listo == 'true'
+        run: python -m alembic upgrade head
+      - name: Resetear demo
+        if: steps.config.outputs.listo == 'true'
+        run: python reset_demo.py

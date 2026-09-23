@@ -14,3 +14,6 @@ frontend/.env
 # Editor/OS
 .DS_Store
 .vscode/
+
+# Archivos que entrega Claude (no son parte del proyecto)
+Claude outputs/

@@ -88,3 +88,42 @@ def test_viewer_demo_no_puede_crear_editar_ni_borrar_nada(client):
     assert client.get("/dashboard/ranking", headers=headers).status_code == 200
     r = client.post(f"/sectores/{sector_id}/comentarios", json={"texto": "Solo mirando"}, headers=headers)
     assert r.status_code == 201
+
+
+def test_demo_publica_no_usa_las_contrasenas_de_ejemplo_para_admin_ni_editor(client, monkeypatch):
+    """seed.py es público: si la demo usara Admin123!/Editor123!, cualquiera
+    podría entrar como admin. Solo el viewer tiene contraseña conocida."""
+    import reset_demo
+
+    monkeypatch.setenv("ES_INSTANCIA_DEMO", "si")
+    monkeypatch.delenv("DEMO_ADMIN_PASSWORD", raising=False)
+    monkeypatch.setenv("DEMO_EDITOR_PASSWORD", "clave-editor-de-un-secret-de-github")
+    monkeypatch.setattr(reset_demo, "SessionLocal", TestingSessionLocal)
+    reset_demo.resetear()
+
+    def login(email, password):
+        return client.post("/auth/login", json={"email": email, "password": password}).status_code
+
+    assert login("admin@acme-analytics.do", "Admin123!") == 401
+    assert login("editor@acme-analytics.do", "Editor123!") == 401
+    assert login("editor@acme-analytics.do", "clave-editor-de-un-secret-de-github") == 200
+    assert login("viewer@acme-analytics.do", "Viewer123!") == 200
+
+
+def test_reset_no_imprime_la_api_key(capsys, monkeypatch):
+    """Corre en GitHub Actions: en un repo público, los logs son públicos."""
+    import reset_demo
+
+    monkeypatch.setenv("ES_INSTANCIA_DEMO", "si")
+    monkeypatch.setattr(reset_demo, "SessionLocal", TestingSessionLocal)
+    reset_demo.resetear()
+    assert "sbk_" not in capsys.readouterr().out
+
+
+def test_database_url_de_render_usa_el_driver_instalado():
+    from app.core.config import Settings
+
+    for url in ("postgresql://u:p@host:5432/db", "postgres://u:p@host:5432/db"):
+        s = Settings(database_url=url)
+        assert s.database_url == "postgresql+psycopg://u:p@host:5432/db"
+    assert Settings(database_url="sqlite:///./dev.db").database_url == "sqlite:///./dev.db"

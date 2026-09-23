@@ -14,9 +14,20 @@ ES_INSTANCIA_DEMO=si (la pone render.yaml en el cron job).
 
 Ejecutar con:
     ES_INSTANCIA_DEMO=si python reset_demo.py
+
+Cuentas de la demo:
+- viewer: contraseña pública conocida (Viewer123!, está en el README) --
+  es la cuenta que se comparte con los visitantes.
+- admin y editor: sus contraseñas de ejemplo de seed.py son PÚBLICAS (el
+  repo es público), así que aquí se reemplazan por DEMO_ADMIN_PASSWORD y
+  DEMO_EDITOR_PASSWORD si existen (secrets de GitHub Actions), o por una
+  contraseña aleatoria que no se imprime en ningún lado. Sin esto, cualquiera
+  que leyera seed.py podía entrar como admin a la demo y, por ejemplo,
+  desactivar la cuenta viewer para todos hasta el siguiente reset.
 """
 
 import os
+import secrets
 import sys
 
 from app.db.session import SessionLocal
@@ -30,7 +41,7 @@ from app.models.invitacion import Invitacion
 from app.models.notificacion import Notificacion
 from app.models.organization import Organization
 from app.models.sector import Sector
-from app.models.user import User
+from app.models.user import Role, User
 from seed import sembrar
 
 # Orden de borrado: hijos antes que padres, para no chocar con las
@@ -52,6 +63,13 @@ _TABLAS_EN_ORDEN_DE_BORRADO = [
 ]
 
 
+def _contrasenas_privadas() -> dict[Role, str]:
+    return {
+        Role.admin: os.environ.get("DEMO_ADMIN_PASSWORD") or secrets.token_urlsafe(24),
+        Role.editor: os.environ.get("DEMO_EDITOR_PASSWORD") or secrets.token_urlsafe(24),
+    }
+
+
 def resetear() -> None:
     if os.environ.get("ES_INSTANCIA_DEMO") != "si":
         print(
@@ -69,8 +87,10 @@ def resetear() -> None:
             db.query(modelo).delete()
         db.commit()
 
-        raw_key = sembrar(db)
-        print(f"Demo reseteada. Nueva API key de ejemplo: {raw_key}")
+        sembrar(db, contrasenas=_contrasenas_privadas())
+        # NO se imprime la API key de ejemplo (es del admin): este script
+        # corre en GitHub Actions y los logs de un repo público son públicos.
+        print("Demo reseteada.")
     finally:
         db.close()
 

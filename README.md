@@ -9,9 +9,12 @@ con honestidad sobre qué de eso es real y qué necesitaría credenciales extern
 producción (ver [más abajo](#features-corporativas-qué-es-real-y-qué-no)).
 
 **Demo en vivo:** https://scoreboard-frontend.onrender.com *(instancia de solo lectura para
-el público, se resetea cada noche — ver [Demo pública](#demo-pública))*
+el público, se resetea cada noche — ver [Demo pública](#demo-pública). En el plan gratis de
+Render el backend se duerme sin uso: la primera carga puede tardar ~1 minuto)*
+<!-- TODO: confirmar esta URL cuando el despliegue esté hecho (Render puede asignar otra
+si el nombre ya está tomado). -->
 
-[![CI](https://github.com/TU-USUARIO/scoreboard-oportunidad-negocio/actions/workflows/ci.yml/badge.svg)](https://github.com/TU-USUARIO/scoreboard-oportunidad-negocio/actions/workflows/ci.yml)
+[![CI](https://github.com/Kevin-Al12/scoreboard-oportunidad-negocio/actions/workflows/ci.yml/badge.svg)](https://github.com/Kevin-Al12/scoreboard-oportunidad-negocio/actions/workflows/ci.yml)
 
 | Rol | Email | Contraseña |
 |---|---|---|
@@ -51,7 +54,7 @@ graph LR
         PG[("PostgreSQL")]
     end
 
-    CRON["Cron nocturno<br/>reset_demo.py"]
+    CRON["GitHub Actions (nocturno)<br/>reset_demo.py"]
     WB["API pública<br/>Banco Mundial"]
     SLACK["Webhook de Slack<br/>(por organización)"]
 
@@ -93,7 +96,9 @@ python -m uvicorn app.main:app --reload --port 8000
 
 Docs interactivos en `http://localhost:8000/docs`.
 
-**Usuarios de prueba** (los imprime `seed.py` al correr):
+**Usuarios de prueba locales** (los imprime `seed.py` al correr). Las contraseñas de admin y
+editor son solo para tu máquina: en la demo pública se reemplazan por secretos privados
+(ver [Demo pública](#demo-pública)), porque este repo es público.
 
 | Rol | Email | Contraseña |
 |---|---|---|
@@ -117,16 +122,22 @@ cd backend
 python -m pytest -q
 ```
 
-43 tests: motor de scoring puro, flujo end-to-end de la API, features corporativas
+46 tests: motor de scoring puro, flujo end-to-end de la API, features corporativas
 (roles, multi-tenancy, auditoría+reversión, comentarios+mención→notificación, API keys),
 los hallazgos de la revisión de seguridad, y el ciclo de reset de la demo pública —
 cada comportamiento tiene su test para que no se repita un regresión.
 
 ## Despliegue
 
-`render.yaml` en la raíz define los 4 recursos como [Blueprint de Render](https://render.com/docs/blueprint-spec):
-Postgres, el backend (FastAPI), el frontend (sitio estático) y un cron job nocturno.
-Conectar el repo en render.com → "New Blueprint Instance" crea los cuatro de una vez.
+`render.yaml` en la raíz define 3 recursos como [Blueprint de Render](https://render.com/docs/blueprint-spec):
+Postgres, el backend (FastAPI) y el frontend (sitio estático). Conectar el repo en
+render.com → "New Blueprint Instance" crea los tres de una vez.
+
+- **La base gratis de Render caduca a los 30 días** de crearla (con 14 días de gracia para
+  pasarla a un plan pago). Para una demo permanente: plan pago de Render, u otro Postgres
+  apuntado desde `DATABASE_URL`.
+- `DATABASE_URL` llega de Render como `postgresql://...`; la config lo reescribe sola a
+  `postgresql+psycopg://` (el driver instalado es psycopg 3, no psycopg2).
 
 - `SECRET_KEY` se genera solo por Render (`generateValue: true`) — nunca vive en el repo.
 - `DATABASE_URL` se conecta automáticamente desde el recurso de Postgres.
@@ -149,11 +160,23 @@ puede comentar (es una decisión de producto: "viewer" es solo lectura de los da
 negocio, no de toda interacción) — esos comentarios, junto con cualquier otra cosa que
 alguien pruebe crear con otra cuenta, desaparecen en el reset nocturno.
 
-`backend/reset_demo.py` corre cada noche (cron job de Render, `0 6 * * *` = 2am hora RD)
+`backend/reset_demo.py` corre cada noche en GitHub Actions (`.github/workflows/reset-demo.yml`,
+`0 6 * * *` = 2am hora RD; gratis, a diferencia de los cron jobs de Render)
 y borra todos los datos + vuelve a sembrar la organización de ejemplo desde cero,
 reutilizando la misma función de siembra que `seed.py` (`sembrar()` en `seed.py`). Tiene
 su propio guardrail (`ES_INSTANCIA_DEMO=si`) para no poder correr por accidente contra
 una base que no sea la de esta demo.
+
+Solo la cuenta **viewer** tiene contraseña pública. Admin y editor usan contraseñas privadas
+(`DEMO_ADMIN_PASSWORD` y `DEMO_EDITOR_PASSWORD`, secrets del repo en GitHub; si faltan, se
+genera una aleatoria que no se imprime): sus contraseñas de ejemplo están en `seed.py`, y
+con el repo público cualquiera podría entrar como admin a la demo. Por lo mismo, el reset
+no imprime la API key del admin — los logs de Actions de un repo público son públicos.
+
+**Para activarlo:** en GitHub → Settings → Secrets and variables → Actions, crear
+`DEMO_DATABASE_URL` (la *External Database URL* de `scoreboard-db` en Render),
+`DEMO_ADMIN_PASSWORD` y `DEMO_EDITOR_PASSWORD`. Sin `DEMO_DATABASE_URL` el workflow no
+hace nada.
 
 ## Decisiones técnicas
 
@@ -180,7 +203,7 @@ comprometiera esa cuenta) podía apuntarla a `http://127.0.0.1:...` o a la metad
 nube (`169.254.169.254`) y usar el propio servidor para atacar su red interna. Ahora solo
 se acepta `https://hooks.slack.com/services/...` exacto — esquema, host y forma del path
 (`app/schemas/organizacion.py::validar_webhook_slack`). De paso, la URL nunca sale
-completa de la API (funciona como contraseña): se guarda enmascarada.
+completa de la API (funciona como contraseña): la API solo la devuelve enmascarada (y solo a admins).
 
 **Rondas validadas antes del commit, no después.** Registrar una evaluación construye la
 ronda completa en memoria y corre el motor de scoring *sobre ese objeto en memoria*
@@ -270,7 +293,7 @@ producto en producción, y prefiero decirlo explícito a dejar que parezca más 
 | Logging estructurado | **Real.** JSON por línea, listo para un agregador real. |
 | Health check | **Real.** `GET /health` prueba conectividad a la base (`SELECT 1`), no solo "el proceso responde". |
 | Tests de carga | **Script real** con Locust (`backend/loadtest/locustfile.py`) — hay que instalarlo y lanzarlo a mano. |
-| CI/CD | **Real** (`.github/workflows/ci.yml`): corre los 43 tests + build del frontend en cada push/PR. |
+| CI/CD | **Real** (`.github/workflows/ci.yml`): corre los 46 tests + build del frontend en cada push/PR. |
 
 ### UX a escala
 

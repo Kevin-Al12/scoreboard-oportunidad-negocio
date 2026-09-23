@@ -230,14 +230,20 @@ def _parece_base_de_desarrollo(database_url: str) -> bool:
     )
 
 
-def sembrar(db: Session) -> str:
+def sembrar(db: Session, contrasenas: dict[Role, str] | None = None) -> str:
     """Inserta organización + usuarios + criterios + sectores (con su
     histórico de rondas) + un ejemplo de cada feature corporativa. Asume
     que la base ya está vacía de esta organización -- no chequea
     duplicados (eso lo hace `seed()`, o el caller para el caso del reset).
 
+    `contrasenas` reemplaza las contraseñas de USUARIOS por rol. La demo
+    pública (reset_demo.py) lo usa para que admin/editor NO tengan las
+    contraseñas de ejemplo que están en este archivo -- el repo es público,
+    así que cualquiera podría leerlas y entrar como admin a la demo.
+
     Devuelve la API key de ejemplo generada (para imprimirla en consola).
     """
+    contrasenas = contrasenas or {}
     org = Organization(nombre=NOMBRE_ORG)
     db.add(org)
     db.commit()
@@ -245,6 +251,7 @@ def sembrar(db: Session) -> str:
 
     usuarios = {}
     for email, password, nombre, role in USUARIOS:
+        password = contrasenas.get(role, password)
         u = User(
             organization_id=org.id,
             email=email,

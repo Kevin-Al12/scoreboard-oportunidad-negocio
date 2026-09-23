@@ -1,7 +1,7 @@
 import json
 from functools import lru_cache
 
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 SECRET_KEY_PLACEHOLDER = "dev-secret-key-cambiar-en-produccion"
@@ -23,6 +23,19 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     database_url: str = "postgresql+psycopg://scoreboard:scoreboard@localhost:5432/scoreboard"
+
+    @field_validator("database_url")
+    @classmethod
+    def _usar_driver_psycopg3(cls, v: str) -> str:
+        """Render, Railway, Heroku, Neon, etc. entregan la URL como
+        `postgresql://...` (o la variante vieja `postgres://...`). Con ese
+        esquema SQLAlchemy busca el driver psycopg2, que NO está instalado
+        (requirements.txt usa psycopg 3), y la app se cae al arrancar con
+        "No module named 'psycopg2'". Se reescribe al esquema del driver real."""
+        for prefijo in ("postgresql://", "postgres://"):
+            if v.startswith(prefijo):
+                return "postgresql+psycopg://" + v[len(prefijo):]
+        return v
 
     # Guardado como string plano (no list[str]) A PROPÓSITO: pydantic-settings
     # intenta decodificar como JSON cualquier variable de entorno que llene un
