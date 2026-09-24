@@ -8,11 +8,9 @@ reversión, comentarios, notificaciones y una API pública con rate limiting —
 con honestidad sobre qué de eso es real y qué necesitaría credenciales externas para
 producción (ver [más abajo](#features-corporativas-qué-es-real-y-qué-no)).
 
-**Demo en vivo:** https://scoreboard-frontend.onrender.com *(instancia de solo lectura para
+**Demo en vivo:** https://scoreboard-frontend-871z.onrender.com *(instancia de solo lectura para
 el público, se resetea cada noche — ver [Demo pública](#demo-pública). En el plan gratis de
 Render el backend se duerme sin uso: la primera carga puede tardar ~1 minuto)*
-<!-- TODO: confirmar esta URL cuando el despliegue esté hecho (Render puede asignar otra
-si el nombre ya está tomado). -->
 
 [![CI](https://github.com/Kevin-Al12/scoreboard-oportunidad-negocio/actions/workflows/ci.yml/badge.svg)](https://github.com/Kevin-Al12/scoreboard-oportunidad-negocio/actions/workflows/ci.yml)
 
@@ -151,7 +149,7 @@ render.com → "New Blueprint Instance" crea los tres de una vez.
 
 ## Demo pública
 
-La instancia en `scoreboard-frontend.onrender.com` es pública y de solo lectura vía la
+La instancia en `scoreboard-frontend-871z.onrender.com` es pública y de solo lectura vía la
 cuenta `viewer@acme-analytics.do` (credenciales arriba). El rol `viewer` no puede crear,
 editar ni borrar sectores, criterios o evaluaciones — está aplicado en el backend
 (`require_role`), no solo escondido en el frontend, y hay un test que lo prueba

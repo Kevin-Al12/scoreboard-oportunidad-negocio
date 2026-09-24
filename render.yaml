@@ -13,11 +13,10 @@
 #   3. SECRET_KEY se genera solo (generateValue) -- nunca vive en este
 #      archivo ni en el repo. DATABASE_URL se conecta solo desde el recurso
 #      `scoreboard-db` de abajo.
-#   4. Las URLs https://scoreboard-frontend.onrender.com y
-#      https://scoreboard-backend.onrender.com son predecibles porque son
-#      justo los `name:` de los servicios de abajo -- si les cambias el
-#      nombre (o si esos nombres ya están tomados en Render y te asigna
-#      otros), actualizá CORS_ORIGINS y VITE_API_URL para que coincidan.
+#   4. Render agregó un sufijo a las URLs porque los nombres base ya estaban
+#      tomados: el frontend quedó en https://scoreboard-frontend-871z.onrender.com y el backend en
+#      https://scoreboard-backend-cy1n.onrender.com. CORS_ORIGINS y VITE_API_URL (abajo) apuntan a esas.
+#      Si recreas los servicios, revisa las URLs nuevas y actualízalas aquí.
 #
 # NOTA: no se pudo probar un despliegue real contra Render desde este
 # entorno de desarrollo -- verificá los nombres de campo exactos contra el
@@ -60,7 +59,7 @@ services:
         value: "true"
       # Ver la nota de arriba sobre por qué esta URL es predecible.
       - key: CORS_ORIGINS
-        value: https://scoreboard-frontend.onrender.com
+        value: https://scoreboard-frontend-871z.onrender.com
       - key: API_RATE_LIMIT_POR_MINUTO
         value: "60"
       # Notificaciones por email/Slack quedan sin configurar por defecto en
@@ -77,7 +76,7 @@ services:
     staticPublishPath: dist
     envVars:
       - key: VITE_API_URL
-        value: https://scoreboard-backend.onrender.com
+        value: https://scoreboard-backend-cy1n.onrender.com
     routes:
       # SPA: cualquier ruta que no sea un archivo real cae en index.html
       # (React Router resuelve /sectores, /criterios, etc. en el cliente).
