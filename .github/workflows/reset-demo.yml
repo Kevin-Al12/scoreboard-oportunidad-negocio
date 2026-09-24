@@ -35,6 +35,8 @@ jobs:
     steps:
       - name: Verificar configuración
         id: config
+        # Corre ANTES del checkout: la carpeta backend todavía no existe.
+        working-directory: .
         run: |
           if [ -z "$DATABASE_URL" ]; then
             echo "DEMO_DATABASE_URL no está configurado; no hay demo que resetear."
